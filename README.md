@@ -1,4 +1,4 @@
-🚀 Distributed System Health Monitor
+#🚀 Distributed System Health Monitor
 A Docker-powered monitoring system where lightweight Go agents collect health data (CPU, RAM, Disk) from multiple computers and send it to a central server for real-time tracking and analysis. This project is designed to simulate an SRE-style observability pipeline in a cloud-native environment.
 
 ✨ Key Features
