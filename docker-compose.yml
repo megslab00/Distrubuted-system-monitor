@@ -1,0 +1,48 @@
+services:
+  # Message Queue for decoupling agents and processor
+  rabbitmq:
+    image: rabbitmq:3.9-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"      # AMQP port for services
+      - "15672:15672"    # Management UI port for browser access
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # The processor that consumes messages
+  processor:
+    build: ./processor
+    container_name: processor
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    restart: unless-stopped
+
+  # The AI assistant API
+  ai-assistant:
+    build: ./assistant
+    container_name: ai-assistant
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    
+  # The agent that collects metrics. We can scale this!
+  agent:
+    build: ./agent
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      # Pass the internal RabbitMQ service name
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      # HOSTNAME is automatically set by Docker and gives a unique ID
+      - HOSTNAME
+    restart: unless-stopped
+    # Use 'deploy' block to scale the agent service
+    deploy:
+      replicas: 3
